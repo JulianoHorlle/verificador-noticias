@@ -22,11 +22,12 @@ Responda APENAS com um JSON válido, sem blocos de código, sem texto extra:
 Seja objetivo, preciso e baseado em fatos. Se a busca não retornar resultados claros, use "não verificável".`;
 
   try {
-    const response = await client.messages.create({
+      const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1024,
       system: systemPrompt,
-      tools: [{ type: "web_search_20250305" as const, name: "web_search" }],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tools: [{ type: "web_search_20250305", name: "web_search" }] as any,
       messages: [
         {
           role: "user",
