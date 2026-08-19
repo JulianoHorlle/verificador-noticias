@@ -8,19 +8,12 @@ export async function POST(req: NextRequest) {
   const { text, image } = body;
 
   if (!text?.trim() && !image) {
-    return NextResponse.json(
-      { error: "Envie um texto ou uma imagem para verificar." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Envie um texto ou uma imagem para verificar." }, { status: 400 });
   }
 
   const systemPrompt = `Você é um fact-checker especializado. Use a ferramenta de busca para pesquisar informações confiáveis e verificar a veracidade da afirmação ou imagem enviada.
 
-Ao analisar imagens:
-- Leia todo o texto visível na imagem
-- Identifique o contexto visual (local, data, pessoas, eventos)
-- Verifique se a imagem pode ser uma montagem ou estar fora de contexto
-- Busque informações sobre o conteúdo mostrado
+Ao analisar imagens: leia todo o texto visível, identifique o contexto visual, verifique se pode ser montagem ou estar fora de contexto, e busque informações sobre o conteúdo.
 
 Responda APENAS com um JSON válido, sem blocos de código, sem texto extra:
 {
@@ -29,37 +22,23 @@ Responda APENAS com um JSON válido, sem blocos de código, sem texto extra:
   "sources": ["Fonte ou contexto 1", "Fonte ou contexto 2"]
 }
 
-Seja objetivo, preciso e baseado em fatos. Se a busca não retornar resultados claros, use "não verificável".`;
+Seja objetivo, preciso e baseado em fatos.`;
 
   try {
-    // Monta o conteúdo da mensagem
-    type ContentBlock =
-      | { type: "text"; text: string }
-      | { type: "image"; source: { type: "base64"; media_type: string; data: string } };
-
+    type ContentBlock = { type: "text"; text: string } | { type: "image"; source: { type: "base64"; media_type: string; data: string } };
     const userContent: ContentBlock[] = [];
 
-    // Adiciona imagem se existir
     if (image) {
       const matches = image.match(/^data:(.+);base64,(.+)$/);
       if (matches) {
-        userContent.push({
-          type: "image",
-          source: {
-            type: "base64",
-            media_type: matches[1],
-            data: matches[2],
-          },
-        });
+        userContent.push({ type: "image", source: { type: "base64", media_type: matches[1], data: matches[2] } });
       }
     }
 
-    // Adiciona texto
-    const textContent = text?.trim()
-      ? `Verifique a veracidade desta afirmação: "${text}"`
-      : "Analise esta imagem e verifique a veracidade do conteúdo mostrado.";
-
-    userContent.push({ type: "text", text: textContent });
+    userContent.push({
+      type: "text",
+      text: text?.trim() ? `Verifique a veracidade desta afirmação: "${text}"` : "Analise esta imagem e verifique a veracidade do conteúdo mostrado.",
+    });
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
@@ -67,24 +46,22 @@ Seja objetivo, preciso e baseado em fatos. Se a busca não retornar resultados c
       system: systemPrompt,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tools: [{ type: "web_search_20250305", name: "web_search" }] as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       messages: [{ role: "user", content: userContent as any }],
     });
 
-    const textResponse = response.content
+    const textContent = response.content
       .filter((b) => b.type === "text")
       .map((b) => (b as { type: "text"; text: string }).text)
       .join("");
 
-    const clean = textResponse.replace(/```json|```/g, "").trim();
+    const clean = textContent.replace(/```json|```/g, "").trim();
     const match = clean.match(/\{[\s\S]*\}/);
     const parsed = JSON.parse(match ? match[0] : clean);
 
     return NextResponse.json(parsed);
   } catch (err) {
     console.error(err);
-    return NextResponse.json(
-      { error: "Erro ao processar. Tente novamente." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erro ao processar. Tente novamente." }, { status: 500 });
   }
 }
