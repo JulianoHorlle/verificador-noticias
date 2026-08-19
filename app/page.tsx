@@ -14,7 +14,7 @@ export default function Home() {
             <div className={styles.brandMark}>PC</div>
             <div>
               <strong className={styles.brandName}>Ponto de Checagem</strong>
-              <small className={styles.brandSub}>Verificador de Notícias</small>
+              <small className={styles.footSmall}>Verificador de Notícias</small>
             </div>
           </div>
         </div>
@@ -82,10 +82,10 @@ export default function Home() {
         <div className={styles.footInner}>
           <div>
             <div className={styles.footBrand}>PONTO DE CHECAGEM</div>
-            <small>Verificador de Notícias • Powered by Claude + Web Search</small>
+            <small className={styles.footSmall}>Verificador de Notícias • Powered by Claude + Web Search</small>
           </div>
           <div>
-            <small>Os resultados são orientativos. Sempre confirme em fontes primárias.</small>
+            <small className={styles.footSmall}>Os resultados são orientativos. Sempre confirme em fontes primárias.</small>
           </div>
         </div>
       </footer>
